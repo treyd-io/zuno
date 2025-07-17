@@ -1,397 +1,286 @@
 # Zuno - Universal Bookkeeping API
 
-A universal API for bookkeeping integrations with full attachment support, following patterns from merge.dev and rutter.com. Perfect for services like midday.ai to export transactions with attachments (receipts/invoices), manage customers, and handle complete bookkeeping workflows.
+A unified API that provides a thin layer over multiple ERP systems. Designed to serve as a consistent interface for services like midday.ai to export transactions with attachments from different accounting providers.
 
-## Features
+## 🚀 Features
 
-- **Universal Integration**: Connect to multiple accounting providers (Xero, Fortnox, QuickBooks Online, etc.)
-- **Full Attachment Support**: Upload, download, and manage receipts, invoices, and supporting documents
-- **Comprehensive Entities**: Customers, vendors, invoices, bills, transactions, expenses, journal entries, and more
-- **Bulk Export**: Export large datasets with attachments in various formats
-- **Real-time Sync**: Incremental updates with conflict resolution
-- **File Management**: Advanced file handling with R2 storage, checksums, and validation
-- **OpenAPI Documentation**: Auto-generated API documentation
+- **Unified Interface**: Single API for multiple accounting providers
+- **Read-Only Operations**: Thin layer that proxies requests to underlying ERPs
+- **Attachment Proxy**: Forward attachment requests to provider APIs
+- **OAuth 2.0 Authentication**: Secure authentication for all providers
+- **Bulk Operations**: Support for bulk data operations
+- **Real-time Sync**: Webhooks and real-time data synchronization
+- **Comprehensive Entities**: Support for all major accounting entities
 
-## Quick Start
+## 🔌 Supported Providers
 
-### 1. Authentication
+| Provider | Region | Authentication | Entities | Attachments |
+|----------|--------|---------------|----------|-------------|
+| **Xero** | Global | OAuth 2.0 | ✅ Full | ✅ Download |
+| **Fortnox** | Sweden | OAuth 2.0 | ✅ Full | ✅ Download |
+| **QuickBooks** | US, CA, UK, AU | OAuth 2.0 | ✅ Full | ✅ Download |
+| **Sage** | UK/EU | OAuth 2.0 | ✅ Full | ✅ Download |
 
+## 📋 Supported Entities
+
+- **Contacts**: Customers and Vendors
+- **Products**: Items and Services
+- **Transactions**: Invoices, Bills, Payments
+- **Accounting**: Accounts, Journal Entries, Expenses
+- **Attachments**: Receipts, Invoices, Documents
+
+## 🔐 Authentication
+
+All providers use OAuth 2.0 for secure authentication:
+
+### Step 1: Get Authorization URL
 ```bash
-# Get OAuth URL
-curl -X POST https://api.zuno.dev/auth/url \
-  -H "Content-Type: application/json" \
-  -d   '{
-    "provider": "quickbooks",
-    "scopes": ["com.intuit.quickbooks.accounting"]
-  }'
-```
-
-### 2. Sync Customers with Attachments
-
-```bash
-# Get customers with attachments
-curl -X GET "https://api.zuno.dev/customers?provider=quickbooks&includeAttachments=true" \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
-
-### 3. Export Transactions with Receipts
-
-```bash
-# Get transactions with attachments (perfect for midday.ai)
-curl -X GET "https://api.zuno.dev/transactions?provider=xero&includeAttachments=true&dateFrom=2024-01-01T00:00:00Z" \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
-
-### 4. Upload Receipt to Transaction
-
-```bash
-# Upload receipt attachment
-curl -X POST "https://api.zuno.dev/attachments" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -F "file=@receipt.pdf" \
-  -F "entityType=transaction" \
-  -F "entityId=txn_123" \
-  -F "attachmentType=receipt" \
-  -F "description=Expense receipt for office supplies"
-```
-
-### 5. Bulk Export with Attachments
-
-```bash
-# Export all bookkeeping data with attachments
-curl -X POST "https://api.zuno.dev/export/bulk" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -d '{
-    "provider": "xero",
-    "entityTypes": ["customers", "invoices", "transactions", "expenses"],
-    "includeAttachments": true,
-    "dateRange": {
-      "startDate": "2024-01-01T00:00:00Z",
-      "endDate": "2024-12-31T23:59:59Z"
-    },
-    "format": "json"
-  }'
-```
-
-## API Endpoints
-
-### Core Entities
-
-| Endpoint | Description |
-|----------|-------------|
-| `GET /customers` | List customers with optional attachments |
-| `POST /customers` | Create new customer |
-| `GET /vendors` | List vendors/suppliers |
-| `POST /vendors` | Create new vendor |
-| `GET /invoices` | List invoices with line items and attachments |
-| `POST /invoices` | Create new invoice |
-| `GET /bills` | List bills with attachments |
-| `POST /bills` | Create new bill |
-| `GET /transactions` | List transactions with attachments |
-| `POST /transactions` | Create new transaction |
-| `GET /expenses` | List expenses with receipts |
-| `POST /expenses` | Create new expense |
-| `GET /accounts` | List chart of accounts |
-| `GET /items` | List products/services |
-
-### Attachments
-
-| Endpoint | Description |
-|----------|-------------|
-| `POST /attachments` | Upload file attachment |
-| `GET /attachments` | List attachments for entity |
-| `DELETE /attachments/{id}` | Delete attachment |
-| `GET /attachments/{id}/download` | Download attachment |
-
-### Bulk Operations
-
-| Endpoint | Description |
-|----------|-------------|
-| `POST /export/bulk` | Bulk export with attachments |
-| `GET /export/status/{jobId}` | Check export job status |
-| `GET /export/download/{jobId}` | Download export results |
-
-## Supported File Types
-
-### Receipts & Invoices
-- **Images**: JPG, PNG, WEBP, TIFF, BMP
-- **Documents**: PDF, Word, Excel, CSV, TXT
-
-### Size Limits
-- **Images**: 10MB max
-- **Documents**: 25MB max
-- **Archives**: 100MB max
-
-## Data Models
-
-### Transaction with Attachments
-```typescript
-{
-  "id": "txn_123",
-  "type": "expense",
-  "description": "Office supplies",
-  "amount": 156.78,
-  "currency": "USD",
-  "date": "2024-01-15T10:30:00Z",
-  "accountId": "acc_456",
-  "accountName": "Office Expenses",
-  "vendorId": "vendor_789",
-  "status": "cleared",
-  "reconciliationStatus": "reconciled",
-  "attachments": [
-    {
-      "id": "att_001",
-      "filename": "receipt.pdf",
-      "originalFilename": "office_supplies_receipt.pdf",
-      "mimeType": "application/pdf",
-      "size": 245760,
-      "url": "https://cdn.zuno.dev/attachments/receipt.pdf",
-      "downloadUrl": "https://cdn.zuno.dev/attachments/receipt.pdf?download=true",
-      "attachmentType": "receipt",
-      "description": "Receipt for office supplies purchase"
-    }
-  ],
-  "customFields": {
-    "project": "Marketing Campaign Q1",
-    "department": "Marketing"
-  }
-}
-```
-
-### Customer with Attachments
-```typescript
-{
-  "id": "cust_123",
-  "name": "Acme Corporation",
-  "email": "billing@acme.com",
-  "addresses": [
-    {
-      "type": "billing",
-      "street": "123 Business St",
-      "city": "New York",
-      "state": "NY",
-      "postalCode": "10001",
-      "country": "US"
-    }
-  ],
-  "paymentTerms": "Net 30",
-  "attachments": [
-    {
-      "id": "att_002",
-      "filename": "contract.pdf",
-      "attachmentType": "contract",
-      "description": "Service agreement"
-    }
-  ]
-}
-```
-
-### Invoice with Line Items & Attachments
-```typescript
-{
-  "id": "inv_456",
-  "number": "INV-2024-001",
-  "customerId": "cust_123",
-  "customerName": "Acme Corporation",
-  "issueDate": "2024-01-01T00:00:00Z",
-  "dueDate": "2024-01-31T00:00:00Z",
-  "status": "sent",
-  "currency": "USD",
-  "subtotal": 1000.00,
-  "taxTotal": 80.00,
-  "total": 1080.00,
-  "lineItems": [
-    {
-      "id": "line_001",
-      "description": "Website Development",
-      "quantity": 40,
-      "unitPrice": 25.00,
-      "total": 1000.00,
-      "taxRate": 0.08,
-      "taxAmount": 80.00
-    }
-  ],
-  "attachments": [
-    {
-      "id": "att_003",
-      "filename": "invoice.pdf",
-      "attachmentType": "invoice",
-      "description": "Generated invoice PDF"
-    }
-  ]
-}
-```
-
-## Use Cases
-
-### For Midday.ai Integration
-```bash
-# Export transactions with attachments for expense management
-curl -X GET "https://api.zuno.dev/transactions?provider=xero&includeAttachments=true&type=expense&dateFrom=2024-01-01T00:00:00Z" \
-  -H "Authorization: Bearer YOUR_TOKEN"
-
-# Upload expense receipt
-curl -X POST "https://api.zuno.dev/attachments" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -F "file=@expense_receipt.jpg" \
-  -F "entityType=expense" \
-  -F "entityId=exp_789" \
-  -F "attachmentType=receipt"
-```
-
-### For Accounting Firms
-```bash
-# Bulk export all client data with supporting documents
-curl -X POST "https://api.zuno.dev/export/bulk" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -d '{
-    "provider": "xero",
-    "entityTypes": ["customers", "vendors", "invoices", "bills", "transactions", "journal_entries"],
-    "includeAttachments": true,
-    "includeCustomFields": true,
-    "format": "json"
-  }'
-```
-
-### For E-commerce Platforms
-```bash
-# Sync customers and their purchase history
-curl -X GET "https://api.zuno.dev/customers?provider=quickbooks&includeAttachments=true" \
-  -H "Authorization: Bearer YOUR_TOKEN"
-
-# Create invoice with product attachments
-curl -X POST "https://api.zuno.dev/invoices" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -d '{
-    "customerId": "cust_123",
-    "lineItems": [
-      {
-        "description": "Premium Software License",
-        "quantity": 1,
-        "unitPrice": 299.99
-      }
-    ]
-  }'
-```
-
-## Supported Providers
-
-### Xero
-- **Type**: Full accounting ERP
-- **Features**: Complete CRUD operations, attachments, transactions, payments
-- **Auth**: OAuth 2.0 with PKCE
-- **Regions**: Global
-- **Capabilities**: `customers`, `vendors`, `invoices`, `bills`, `transactions`, `attachments`, `accounts`, `payments`
-
-### Fortnox
-- **Type**: Swedish accounting system
-- **Features**: Full CRUD operations, comprehensive bookkeeping
-- **Auth**: OAuth 2.0
-- **Regions**: Sweden
-- **Capabilities**: `customers`, `vendors`, `invoices`, `bills`, `accounts`, `items`, `journal_entries`, `full_crud`
-
-### QuickBooks Online
-- **Type**: US market accounting system
-- **Features**: Complete accounting suite with attachments, payments, journal entries
-- **Auth**: OAuth 2.0 with realmId (tenant isolation)
-- **Regions**: United States, Canada, UK, Australia
-- **Capabilities**: `customers`, `vendors`, `invoices`, `bills`, `items`, `accounts`, `expenses`, `payments`, `journal_entries`, `attachments`, `full_crud`
-
-### Coming Soon
-- **NetSuite** - Enterprise ERP
-- **Sage** - UK/Europe accounting
-
-## Error Handling
-
-The API returns structured error responses:
-
-```json
-{
-  "error": "validation_failed",
-  "message": "File size exceeds limit. Maximum size for document files: 25MB",
-  "code": "FILE_TOO_LARGE"
-}
-```
-
-## Rate Limits
-
-- **Standard**: 100 requests/minute
-- **Bulk Export**: 5 requests/minute
-- **File Upload**: 20 requests/minute
-
-## Webhooks
-
-Real-time notifications for data changes:
-
-```json
-{
-  "event": "transaction.created",
-  "data": {
-    "id": "txn_123",
-    "type": "expense",
-    "amount": 156.78,
-    "attachments": [...]
-  },
-  "timestamp": "2024-01-15T10:30:00Z"
-}
-```
-
-## QuickBooks Online Example
-
-```bash
-# 1. Get OAuth URL
 curl -X POST https://api.zuno.dev/auth/url \
   -H "Content-Type: application/json" \
   -d '{
-    "provider": "quickbooks",
-    "scopes": ["com.intuit.quickbooks.accounting"]
+    "provider": "sage",
+    "scopes": ["full_access"],
+    "redirectUri": "https://your-app.com/callback"
   }'
+```
 
-# 2. Exchange code for token
+### Step 2: Exchange Code for Token
+```bash
 curl -X POST https://api.zuno.dev/auth/token \
   -H "Content-Type: application/json" \
   -d '{
-    "provider": "quickbooks",
-    "code": "YOUR_AUTH_CODE"
+    "provider": "sage",
+    "code": "authorization_code_from_callback"
   }'
-
-# 3. Get customers with attachments
-curl -X GET "https://api.zuno.dev/customers?provider=quickbooks&includeAttachments=true" \
-  -H "Authorization: Bearer YOUR_TOKEN"
-
-# 4. Create an invoice
-curl -X POST https://api.zuno.dev/invoices \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "provider": "quickbooks",
-    "customerId": "123",
-    "issueDate": "2024-01-15",
-    "dueDate": "2024-02-15",
-    "lineItems": [
-      {
-        "description": "Consulting Services",
-        "quantity": 10,
-        "unitPrice": 150,
-        "total": 1500
-      }
-    ]
-  }'
-
-# 5. Get invoice with attachments
-curl -X GET "https://api.zuno.dev/invoices/inv_123?provider=quickbooks&includeAttachments=true" \
-  -H "Authorization: Bearer YOUR_TOKEN"
-
-# 6. Export transactions for midday.ai
-curl -X GET "https://api.zuno.dev/transactions?provider=quickbooks&includeAttachments=true&dateFrom=2024-01-01T00:00:00Z" \
-  -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
-## Development
+## 📖 API Examples
 
+### Sage Business Cloud Accounting
+
+#### Authentication
+```javascript
+// Get authorization URL
+const authResponse = await fetch('/auth/url', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    provider: 'sage',
+    scopes: ['full_access'],
+    redirectUri: 'https://your-app.com/callback'
+  })
+});
+
+// Exchange code for token
+const tokenResponse = await fetch('/auth/token', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    provider: 'sage',
+    code: 'authorization_code'
+  })
+});
+```
+
+#### Fetch Customers
+```javascript
+const customers = await fetch('/customers?provider=sage', {
+  headers: { 
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json'
+  }
+});
+```
+
+#### Create Invoice
+```javascript
+const invoice = await fetch('/invoices?provider=sage', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    customerId: 'customer-123',
+    issueDate: '2024-01-15',
+    dueDate: '2024-02-15',
+    lineItems: [{
+      description: 'Consulting services',
+      quantity: 10,
+      unitPrice: 150.00
+    }]
+  })
+});
+```
+
+#### Download Attachments
+```javascript
+// Get invoice attachments
+const attachments = await fetch('/attachments?provider=sage&entityType=invoice&entityId=inv-123', {
+  headers: { 'Authorization': `Bearer ${accessToken}` }
+});
+
+// Download specific attachment
+const fileStream = await fetch(`/attachments/att-456/download?provider=sage`, {
+  headers: { 'Authorization': `Bearer ${accessToken}` }
+});
+```
+
+### Xero
+
+#### Authentication
+```javascript
+const authResponse = await fetch('/auth/url', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    provider: 'xero',
+    scopes: ['accounting.transactions', 'accounting.attachments'],
+    redirectUri: 'https://your-app.com/callback'
+  })
+});
+```
+
+#### Fetch Invoices with Attachments
+```javascript
+// Get invoices
+const invoices = await fetch('/invoices?provider=xero', {
+  headers: { 'Authorization': `Bearer ${accessToken}` }
+});
+
+// Get attachments for specific invoice
+const attachments = await fetch('/attachments?provider=xero&entityType=invoice&entityId=inv-123', {
+  headers: { 'Authorization': `Bearer ${accessToken}` }
+});
+```
+
+### Fortnox
+
+#### Authentication
+```javascript
+const authResponse = await fetch('/auth/url', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    provider: 'fortnox',
+    scopes: ['invoice', 'customer', 'supplier'],
+    redirectUri: 'https://your-app.com/callback'
+  })
+});
+```
+
+#### Bulk Export
+```javascript
+const exportJob = await fetch('/export', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    provider: 'fortnox',
+    entities: ['invoices', 'customers', 'attachments'],
+    dateRange: {
+      start: '2024-01-01',
+      end: '2024-12-31'
+    }
+  })
+});
+```
+
+### QuickBooks Online
+
+#### Authentication
+```javascript
+const authResponse = await fetch('/auth/url', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    provider: 'quickbooks',
+    scopes: ['com.intuit.quickbooks.accounting'],
+    redirectUri: 'https://your-app.com/callback'
+  })
+});
+```
+
+#### Multi-Region Support
+```javascript
+// US region
+const usCustomers = await fetch('/customers?provider=quickbooks&region=US', {
+  headers: { 'Authorization': `Bearer ${accessToken}` }
+});
+
+// UK region
+const ukCustomers = await fetch('/customers?provider=quickbooks&region=UK', {
+  headers: { 'Authorization': `Bearer ${accessToken}` }
+});
+```
+
+## 🗂️ Data Models
+
+### Customer
+```typescript
+interface Customer {
+  id: string;
+  name: string;
+  displayName?: string;
+  email?: string;
+  phone?: PhoneNumber;
+  addresses: Address[];
+  taxNumber?: string;
+  currency: string;
+  isActive: boolean;
+  balance?: number;
+  creditLimit?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+### Invoice
+```typescript
+interface Invoice {
+  id: string;
+  number: string;
+  customerId: string;
+  issueDate: string;
+  dueDate: string;
+  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+  currency: string;
+  subtotal: number;
+  taxTotal: number;
+  total: number;
+  amountDue: number;
+  lineItems: LineItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+### Attachment
+```typescript
+interface Attachment {
+  id: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  url: string;
+  downloadUrl: string;
+  entityType: 'invoice' | 'bill' | 'expense';
+  entityId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+## 🛠️ Development
+
+### Prerequisites
+- Bun (Package manager)
+- Node.js 18+
+- TypeScript
+
+### Setup
 ```bash
 # Install dependencies
 bun install
@@ -399,13 +288,170 @@ bun install
 # Start development server
 bun run dev
 
-# Generate types
-bun run cf-typegen
+# Build for production
+bun run build
 
-# Run database migrations
-bun run db:migrate
+# Deploy to Cloudflare Workers
+bun run deploy
 ```
 
-## License
+### Environment Variables
+```bash
+# Provider Credentials
+XERO_CLIENT_ID=your_xero_client_id
+XERO_CLIENT_SECRET=your_xero_client_secret
 
-MIT License - see LICENSE file for details.
+FORTNOX_CLIENT_ID=your_fortnox_client_id
+FORTNOX_CLIENT_SECRET=your_fortnox_client_secret
+
+QUICKBOOKS_CLIENT_ID=your_quickbooks_client_id
+QUICKBOOKS_CLIENT_SECRET=your_quickbooks_client_secret
+
+SAGE_CLIENT_ID=your_sage_client_id
+SAGE_CLIENT_SECRET=your_sage_client_secret
+
+# Database
+DATABASE_URL=your_database_url
+
+# Optional: Environment
+NODE_ENV=development
+```
+
+## 📊 Provider Capabilities
+
+### Sage Business Cloud Accounting
+- **Region**: UK and European markets
+- **Authentication**: OAuth 2.0
+- **Rate Limits**: 1000 requests/hour
+- **Entities**: Customers, Suppliers, Invoices, Bills, Items, Accounts, Journal Entries, Expenses, Payments
+- **Attachments**: Full support via native API
+- **Bulk Operations**: Supported
+- **Webhooks**: Available
+
+### Xero
+- **Region**: Global
+- **Authentication**: OAuth 2.0
+- **Rate Limits**: 10,000 requests/day
+- **Entities**: Full accounting entity support
+- **Attachments**: Download and metadata only
+- **Bulk Operations**: Supported
+- **Webhooks**: Available
+
+### Fortnox
+- **Region**: Sweden
+- **Authentication**: OAuth 2.0
+- **Rate Limits**: 25 requests/second
+- **Entities**: Full Swedish accounting support
+- **Attachments**: Full support
+- **Bulk Operations**: Supported
+- **Webhooks**: Available
+
+### QuickBooks Online
+- **Region**: US, Canada, UK, Australia
+- **Authentication**: OAuth 2.0
+- **Rate Limits**: 500 requests/minute
+- **Entities**: Comprehensive US GAAP support
+- **Attachments**: Full support
+- **Bulk Operations**: Supported
+- **Webhooks**: Available
+
+## 🔄 Sync Options
+
+All providers support incremental sync:
+
+```javascript
+// Sync customers modified since last sync
+const customers = await fetch('/customers?provider=sage&modifiedSince=2024-01-01T00:00:00Z', {
+  headers: { 'Authorization': `Bearer ${accessToken}` }
+});
+
+// Bulk export with date range
+const exportJob = await fetch('/export', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    provider: 'sage',
+    entities: ['invoices', 'customers', 'attachments'],
+    dateRange: {
+      start: '2024-01-01',
+      end: '2024-12-31'
+    },
+    includeAttachments: true
+  })
+});
+```
+
+## 🚦 Rate Limiting
+
+Each provider has different rate limits:
+
+| Provider | Rate Limit | Reset Window |
+|----------|------------|--------------|
+| Xero | 10,000/day | 24 hours |
+| Fortnox | 25/second | 1 second |
+| QuickBooks | 500/minute | 1 minute |
+| Sage | 1000/hour | 1 hour |
+
+## 🔗 Webhooks
+
+Real-time notifications for data changes:
+
+```javascript
+// Register webhook
+const webhook = await fetch('/webhooks', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    provider: 'sage',
+    url: 'https://your-app.com/webhook',
+    events: ['invoice.created', 'invoice.updated', 'payment.received']
+  })
+});
+```
+
+## 📈 Monitoring
+
+Health check endpoint:
+```bash
+curl https://api.zuno.dev/health
+```
+
+Response:
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "providers": ["xero", "fortnox", "quickbooks", "sage"],
+  "features": ["attachments", "bulk_export", "real_time_sync", "webhooks"],
+  "version": "2.0.0"
+}
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
+
+## 📄 License
+
+MIT License - see LICENSE file for details
+
+## 🆘 Support
+
+For support and questions:
+- Create an issue on GitHub
+- Email: support@zuno.dev
+- Documentation: https://docs.zuno.dev
+
+---
+
+Built with ❤️ for the accounting integration community

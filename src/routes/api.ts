@@ -3,6 +3,7 @@ import { ProviderManager } from '../providers/manager'
 import { XeroProvider } from '../providers/xero'
 import { FortnoxProvider } from '../providers/fortnox'
 import { QuickBooksProvider } from '../providers/quickbooks'
+import { SageProvider } from '../providers/sage'
  import { 
   CustomerSchema, 
   VendorSchema,
@@ -33,6 +34,7 @@ app.use('*', async (c, next) => {
     providerManager.registerProvider('xero', XeroProvider)
    providerManager.registerProvider('fortnox', FortnoxProvider)
   providerManager.registerProvider('quickbooks', QuickBooksProvider)
+  providerManager.registerProvider('sage', SageProvider)
   }
 
  
@@ -66,7 +68,7 @@ const getAuthUrlRoute = createRoute({
       content: {
         'application/json': {
           schema: z.object({
-            provider: z.enum(['xero', 'fortnox', 'quickbooks']),
+            provider: z.enum(['xero', 'fortnox', 'quickbooks', 'sage']),
             scopes: z.array(z.string()),
             redirectUri: z.string().url().optional()
           })
@@ -128,7 +130,7 @@ const exchangeTokenRoute = createRoute({
       content: {
         'application/json': {
           schema: z.object({
-            provider: z.enum(['xero', 'fortnox', 'quickbooks']),
+            provider: z.enum(['xero', 'fortnox', 'quickbooks', 'sage']),
             code: z.string(),
             state: z.string().optional()
           })
@@ -282,7 +284,7 @@ const createAccountRoute = createRoute({
   path: '/accounts',
   request: {
     query: z.object({
-            provider: z.enum(['xero', 'fortnox', 'quickbooks']),
+            provider: z.enum(['xero', 'fortnox', 'quickbooks', 'sage']),
     }),
     body: {
       content: {
@@ -382,7 +384,7 @@ const createCustomerRoute = createRoute({
   path: '/customers',
   request: {
     query: z.object({
-        provider: z.enum(['xero', 'fortnox', 'quickbooks']),
+        provider: z.enum(['xero', 'fortnox', 'quickbooks', 'sage']),
     }),
     body: {
       content: {
@@ -482,7 +484,7 @@ const createVendorRoute = createRoute({
   path: '/vendors',
   request: {
     query: z.object({
-        provider: z.enum(['xero', 'fortnox', 'quickbooks']),
+        provider: z.enum(['xero', 'fortnox', 'quickbooks', 'sage']),
     }),
     body: {
       content: {
@@ -586,7 +588,7 @@ const createInvoiceRoute = createRoute({
   path: '/invoices',
   request: {
     query: z.object({
-        provider: z.enum(['xero', 'fortnox', 'quickbooks']),
+        provider: z.enum(['xero', 'fortnox', 'quickbooks', 'sage']),
     }),
     body: {
       content: {
@@ -879,7 +881,7 @@ app.openapi(healthRoute, (c) => {
   return c.json({
     status: 'healthy' as const,
     timestamp: new Date().toISOString(),
-    providers: ['xero', 'fortnox', 'quickbooks'],
+    providers: ['xero', 'fortnox', 'quickbooks', 'sage'],
     features: ['attachments', 'bulk_export', 'real_time_sync', 'webhooks'],
     version: '2.0.0'
   })

@@ -1,0 +1,45 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "zuno",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-07-17",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "vars": {
+    "ENVIRONMENT": "development",
+    "XERO_CLIENT_ID": "placeholder",
+    "XERO_CLIENT_SECRET": "placeholder", 
+    "REDIRECT_URI": "http://localhost:3000/callback"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "zuno-erp-sync",
+      "database_id": "your-database-id-here"
+    }
+  ],
+  "queues": {
+    "consumers": [
+      {
+        "queue": "sync-queue",
+        "max_batch_size": 10,
+        "max_batch_timeout": 30,
+        "max_retries": 3,
+        "dead_letter_queue": "sync-dlq"
+      }
+    ],
+    "producers": [
+      {
+        "queue": "sync-queue",
+        "binding": "SYNC_QUEUE"
+      }
+    ]
+  },
+  "kv_namespaces": [
+    {
+      "binding": "CACHE",
+      "id": "your-kv-namespace-id-here"
+    }
+  ]
+}

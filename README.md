@@ -1,4 +1,4 @@
-# Zuno - Universal Bookkeeping API
+# Zuno - Universal Bookkeeping API (WIP)
 
 A unified API that provides a thin layer over multiple ERP systems. Designed to serve as a consistent interface for services like midday.ai to export transactions with attachments from different accounting providers.
 

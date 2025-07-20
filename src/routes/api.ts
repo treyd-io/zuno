@@ -70,7 +70,8 @@ const getAuthUrlRoute = createRoute({
           schema: z.object({
             provider: z.enum(['xero', 'fortnox', 'quickbooks', 'sage']),
             scopes: z.array(z.string()),
-            redirectUri: z.string().url().optional()
+            redirectUri: z.string().url().optional(),
+            state: z.string().optional()
           })
         }
       }
@@ -103,7 +104,7 @@ const getAuthUrlRoute = createRoute({
 })
 
 app.openapi(getAuthUrlRoute, async (c) => {
-  const { provider, scopes, redirectUri } = await c.req.json()
+  const { provider, scopes, redirectUri, state } = await c.req.json()
   
   const providerInstance = await providerManager.initializeProvider(provider, {
     clientId: c.env.XERO_CLIENT_ID || 'placeholder',
@@ -111,12 +112,12 @@ app.openapi(getAuthUrlRoute, async (c) => {
     redirectUri: redirectUri || c.env.REDIRECT_URI || 'http://localhost:3000/callback'
   })
   
-  const state = crypto.randomUUID()
-  const authUrl = providerInstance.getAuthUrl(scopes, state)
-  
+  const stateParam = state || crypto.randomUUID()
+  const authUrl = providerInstance.getAuthUrl(scopes, stateParam)
+
   return c.json({
     authUrl,
-    state,
+    state: stateParam,
     provider
   })
 })

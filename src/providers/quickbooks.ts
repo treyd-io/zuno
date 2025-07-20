@@ -26,14 +26,14 @@ export class QuickBooksProvider extends CoreProvider {
     }
   }
 
-  getAuthUrl(scopes: string[]): string {
+  getAuthUrl(scopes: string[], state: string): string {
     const params = new URLSearchParams({
       client_id: this.config.clientId,
       scope: scopes.join(' ') || 'com.intuit.quickbooks.accounting',
       redirect_uri: this.config.redirectUri || '',
       response_type: 'code',
       access_type: 'offline',
-      state: crypto.randomUUID()
+      state: state
     })
     
     return `${this.discoveryUrl}?${params.toString()}`

@@ -11,13 +11,13 @@ export class XeroProvider extends CoreProvider {
     }
   }
 
-  getAuthUrl(scopes: string[]): string {
+  getAuthUrl(scopes: string[], state: string): string {
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: this.config.clientId,
       redirect_uri: this.config.redirectUri || '',
       scope: scopes.join(' '),
-      state: crypto.randomUUID()
+      state: state,
     })
     
     return `https://login.xero.com/identity/connect/authorize?${params.toString()}`

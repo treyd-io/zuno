@@ -111,8 +111,8 @@ app.openapi(getAuthUrlRoute, async (c) => {
     redirectUri: redirectUri || c.env.REDIRECT_URI || 'http://localhost:3000/callback'
   })
   
-  const authUrl = providerInstance.getAuthUrl(scopes)
   const state = crypto.randomUUID()
+  const authUrl = providerInstance.getAuthUrl(scopes, state)
   
   return c.json({
     authUrl,

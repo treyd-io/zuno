@@ -27,13 +27,13 @@ export class SageProvider extends CoreProvider {
     }
   }
 
-  getAuthUrl(scopes: string[]): string {
+  getAuthUrl(scopes: string[], state: string): string {
     const params = new URLSearchParams({
       client_id: this.config.clientId,
       redirect_uri: this.config.redirectUri || '',
       response_type: 'code',
       scope: scopes.join(' ') || 'full_access',
-      state: crypto.randomUUID()
+      state: state
     })
     
     return `${this.authUrl}?${params.toString()}`

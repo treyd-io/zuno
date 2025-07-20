@@ -98,7 +98,7 @@ export abstract class CoreProvider {
   }
 
   // Authentication methods
-  abstract getAuthUrl(scopes: string[]): string
+  abstract getAuthUrl(scopes: string[], state: string): string
   abstract exchangeCodeForToken(code: string): Promise<ProviderAuth>
   abstract refreshAccessToken(): Promise<ProviderAuth>
   abstract validateAuth(): Promise<boolean>

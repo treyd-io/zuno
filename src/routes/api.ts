@@ -71,7 +71,11 @@ const getAuthUrlRoute = createRoute({
             provider: z.enum(['xero', 'fortnox', 'quickbooks', 'sage']),
             scopes: z.array(z.string()),
             redirectUri: z.string().url().optional(),
-            state: z.string().optional()
+            state: z.string().optional(),
+            config: z.object({
+              clientId: z.string(),
+              clientSecret: z.string()
+            })
           })
         }
       }
@@ -104,12 +108,12 @@ const getAuthUrlRoute = createRoute({
 })
 
 app.openapi(getAuthUrlRoute, async (c) => {
-  const { provider, scopes, redirectUri, state } = await c.req.json()
+  const { provider, scopes, redirectUri, state, config } = await c.req.json()
   
   const providerInstance = await providerManager.initializeProvider(provider, {
-    clientId: c.env.XERO_CLIENT_ID || 'placeholder',
-    clientSecret: c.env.XERO_CLIENT_SECRET || 'placeholder',
-    redirectUri: redirectUri || c.env.REDIRECT_URI || 'http://localhost:3000/callback'
+    clientId: config.clientId,
+    clientSecret: config.clientSecret,
+    redirectUri: redirectUri || c.env.REDIRECT_URI || 'http://localhost:3000/callback',
   })
   
   const stateParam = state || crypto.randomUUID()
@@ -133,7 +137,11 @@ const exchangeTokenRoute = createRoute({
           schema: z.object({
             provider: z.enum(['xero', 'fortnox', 'quickbooks', 'sage']),
             code: z.string(),
-            state: z.string().optional()
+            state: z.string().optional(),
+            config: z.object({
+              clientId: z.string(),
+              clientSecret: z.string(),
+            })
           })
         }
       }
@@ -168,11 +176,11 @@ const exchangeTokenRoute = createRoute({
 })
 
 app.openapi(exchangeTokenRoute, async (c) => {
-  const { provider, code } = await c.req.json()
+  const { provider, code, config } = await c.req.json()
   
   const providerInstance = await providerManager.initializeProvider(provider, {
-    clientId: c.env.XERO_CLIENT_ID || 'placeholder',
-    clientSecret: c.env.XERO_CLIENT_SECRET || 'placeholder'
+    clientId: config.clientId,
+    clientSecret: config.clientSecret,
   })
   
   const auth = await providerInstance.exchangeCodeForToken(code)
